@@ -49,7 +49,7 @@ createApp({
 //     },
 //     on: {
 //         slideChange: function () {
-//        .    const activeSlide = this.slides[this.activeIndex];
+//             const activeSlide = this.slides[this.activeIndex];
 //             const bannerNumber = activeSlide.swiperSlideIndex ?? 0;
 //             const slidersElement = document.getElementById('sliders');
 //             slidersElement.style.backgroundImage = `url(assets/banner-${bannerNumber+1}.jpeg)`;
@@ -60,24 +60,22 @@ createApp({
 // });
 
 function showSwipperSlide() {
-    const swiperWrapper = document.querySelector(".swiper-wrapper");
-    let slidesHTML = '';
-    
-    for (let i = 1; i < 8; i++) {
-        slidesHTML += `
-            <div class="swiper-slide flex items-center justify-center px-0 md:px-4" data-banner="${i}">
-              <div class="max-w-6xl px-4 md:px-0 mx-auto">
-                <img
-                  src="assets/banner-${i}.jpeg"
-                  alt="Legend Cinema ${i}"
-                  class="w-full h-full object-cover rounded-2xl"
-                />
-              </div>
-            </div>
-        `;
-    }
-    
-    swiperWrapper.innerHTML = slidesHTML;
+    // const swiperWrapper = document.querySelector(".mySwiper");
+    // let slidesHTML = '';
+
+    // for (let i = 1; i < 8; i++) {
+    //     slidesHTML += `
+    //         <div class="swiper-slide" style="width: 960px; margin-right: 24px;">
+    //             <img 
+    //                 class="aspect-video max-h-[500px] w-full object-cover lg:rounded-[20px]"
+    //                 src="assets/banner-${i}.jpeg"
+    //                 alt="image/jpeg"
+    //             >
+    //         </div>
+    //     `;
+    // }
+
+    // swiperWrapper.innerHTML = slidesHTML;
 
     // Initialize Swiper
     new Swiper(".mySwiper", {
@@ -90,15 +88,15 @@ function showSwipperSlide() {
             delay: 2500,
             disableOnInteraction: false
         },
-        on: {
-            slideChange: function () {
-                const activeSlide = this.slides[this.activeIndex];
-                const bannerNumber = activeSlide.getAttribute('data-banner');
-                const slidersElement = document.getElementById('sliders');
-                slidersElement.style.backgroundImage = `url(assets/banner-${bannerNumber}.jpeg)`;
-                slidersElement.style.transition = 'background-image 0.3s ease-in-out';
-            }
-        }
+        // on: {
+        //     slideChange: function () {
+        //         const activeSlide = this.slides[this.activeIndex];
+        //         const bannerNumber = activeSlide.getAttribute('data-banner');
+        //         const slidersElement = document.getElementById('sliders');
+        //         slidersElement.style.backgroundImage = `url(assets/banner-${bannerNumber}.jpeg)`;
+        //         slidersElement.style.transition = 'background-image 0.3s ease-in-out';
+        //     }
+        // }
     });
 }
 

@@ -1,6 +1,98 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+/* html,
+body {
+    position: relative;
+    height: 100%;
+} */
+
 body {
     margin: 0;
     padding: 0;
     font-family: "Inter", sans-serif;
+    background: radial-gradient(circle at center, #440000 0%, #000000 70%);
+    min-height: 100vh;
+}
+
+.divider {
+    height: 0.5px;
+    background: linear-gradient(90deg, transparent, #9f9f9f, transparent);
+}
+
+#sliders {
+    width: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* .mySwiper {
+    background: linear-gradient(180deg,rgba(31,31,31,.5),rgba(0,0,0,.5) 50.65%,hsla(0,0%,8%,.5)) !important;
+} */
+
+.swiper-slide {
+    text-align: center;
+    font-size: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.swiper-slide img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Pagination Styles */
+.swiper-pagination-bullet {
+    width: 4px !important;
+    height: 4px !important;
+    background: rgba(255, 0, 0, 0.3) !important;
+    opacity: 1 !important;
+    border-radius: 50% !important;
+    margin: 0 3px !important;
+}
+
+.swiper-pagination-bullet-active {
+    width: 10px !important;
+    background: rgb(255, 0, 0) !important;
+    border-radius: 3px !important;
+    transition: width 0.3s ease;
+}
+
+/* Tablet screens */
+@media (min-width: 768px) {
+    .swiper-pagination-bullet {
+        width: 8px !important;
+        height: 8px !important;
+        margin: 0 4px !important;
+    }
+
+    .swiper-pagination-bullet-active {
+        width: 20px !important;
+        border-radius: 4px !important;
+    }
+}
+
+/* Desktop screens */
+@media (min-width: 1024px) {
+    .swiper-pagination-bullet {
+        width: 8px !important;
+        height: 8px !important;
+        margin: 0 5px !important;
+    }
+
+    .swiper-pagination-bullet-active {
+        width: 24px !important;
+        border-radius: 5px !important;
+    }
+}
+
+.hero-overlay-1 {
+    background: linear-gradient(180deg,rgba(31,31,31,.5),rgba(0,0,0,.5) 50.65%,hsla(0,0%,8%,.5));
+}
+.hero-overlay-2 {
+    background: linear-gradient(180deg,hsla(0,0%,7%,0),#121212);
 }
