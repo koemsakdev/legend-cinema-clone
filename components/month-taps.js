@@ -92,6 +92,13 @@ export default {
                                 </div>
                             </div>
                         </div>
+
+                        <div v-if="commingSoon.length < 1" class="flex h-[150px] items-center justify-center lg:h-[300px]">
+                            <div class="flex flex-col items-center justify-center gap-3">
+                                <img src="assets/not-found.svg" alt="No Movies Found" class="img w-35 lg:w-45" />
+                                <p class="text-sm font-medium lg:text-base text-white">No movies avialable!</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

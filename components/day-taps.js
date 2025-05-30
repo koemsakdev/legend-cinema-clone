@@ -10,7 +10,8 @@ export default {
             activeTab: '',
             tabs: [],
             nowShowing: [],
-            isLoading: false
+            isLoading: false,
+            baseUrl: "https://api.legend.com.kh"
         }
     },
     methods: {
@@ -39,7 +40,7 @@ export default {
             try {
                 this.isLoading = true;
                 const response = await axios.get(
-                    `https://api.legend.com.kh/scheduled-films?limit=100&date=${date}&vistaCinemaId&sort=latest-released`
+                    `${this.baseUrl}/scheduled-films?limit=100&date=${date}&vistaCinemaId&sort=latest-released`
                 );
                 this.nowShowing = response.data.rows;
                 this.isLoading = false;
@@ -97,6 +98,13 @@ export default {
                                 <div v-for="movie in nowShowing" :key="movie.id" class="animate-fade-in">
                                     <poster-card :movie="movie" />
                                 </div>
+                            </div>
+                        </div>
+
+                        <div v-if="nowShowing.length < 1" class="flex h-[150px] items-center justify-center lg:h-[300px]">
+                            <div class="flex flex-col items-center justify-center gap-3">
+                                <img src="assets/not-found.svg" alt="No Movies Found" class="img w-35 lg:w-45" />
+                                <p class="text-sm font-medium lg:text-base text-white">No movies avialable!</p>
                             </div>
                         </div>
                     </div>

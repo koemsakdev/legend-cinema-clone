@@ -6,18 +6,56 @@ export default {
             cinemas: [],
             cinema: undefined,
             activeCinemaId: null,
-            cinemaApi: "https://api.legend.com.kh/cinemas",
+            cinemaApi: "https://api.legend.com.kh",
             isLoading: false,
             search: "",
             searchResults: [],
             isSearch: false,
             isInputSearch: false,
+            limit: 10,
+            navbarItems: [
+                {
+                    title: "Home",
+                    href: "/",
+                    active: true,
+                    showWhenSmall: false,
+                    iconClass: "fa-solid fa-house"
+                },
+                {
+                    title: "Cinemas",
+                    href: "/cinemas",
+                    active: false,
+                    showWhenSmall: false,
+                    iconClass: "fa fa-location-dot"
+                },
+                {
+                    title: "Offers",
+                    href: "/offers",
+                    active: false,
+                    showWhenSmall: false,
+                    iconClass: "fa fa-tags"
+                },
+                {
+                    title: "F&B",
+                    href: "/f-and-b",
+                    active: false,
+                    showWhenSmall: false,
+                    iconClass: "fa-solid fa-wine-glass"
+                },
+                {
+                    title: "More",
+                    href: "/more",
+                    active: false,
+                    showWhenSmall: true,
+                    iconClass: "fa-solid fa-chess-board"
+                }
+            ]
         };
     },
     methods: {
         async fetchCinemas() {
             try {
-                const response = await fetch(this.cinemaApi);
+                const response = await fetch(`${this.cinemaApi}/cinemas`);
                 const data = await response.json();
                 this.cinemas = data;
             } catch (error) {
@@ -27,6 +65,7 @@ export default {
         async handleChange(id) {
             this.activeCinemaId = id;
             this.cinema = this.cinemas.find(cinema => cinema.vistaCinemaId === id);
+            console.log(this.cinema);
             this.isOpen = false;
         },
         toggleDropdown() {
@@ -38,16 +77,22 @@ export default {
                 this.isOpen = false;
             }
         },
+        handleCloseSearchOutside(event) {
+            const dropdown = this.$refs.searchDropdown;
+            if (dropdown &&!dropdown.contains(event.target)) {
+                this.isInputSearch = false;
+            }
+        },
         async handleSearch() {
-            let limit = 10;
-            let api = `https://api.legend.com.kh/films?limit=${limit}`;
+            this.isLoading = true;
+            let api = `${this.cinemaApi}/films?limit=${this.limit}`;
             if (this.search.trim() === '') {
                 this.isSearch = false;
-                api = `https://api.legend.com.kh/scheduled-films?limit=${limit}`;
+                api = `${this.cinemaApi}/scheduled-films?limit=${this.limit}`;
                 this.searchResults = [];
             } else {
                 this.isSearch = true;
-                limit = 100;
+                this.limit = 100;
                 api = `${api}&searchText=${this.search}`;
             }
             try {
@@ -59,20 +104,20 @@ export default {
                 this.isLoading = false;
                 console.error("Error fetching cinemas:", error);
             }
-
-            console.log(api);
         },
-        handleClearSearch() {
+        async handleClearSearch() {
             this.search = '';
-            this.isSearch = false;
-            this.isInputSearch = false;
+            if (this.search.trim() !== '' || (this.searchResults.length === 0 && !this.isSearch)) {
+                await this.handleSearch();
+            }
         },
         async handleFocus() {
-            this.isInputSearch = true;
-            this.handleSearch();
-        },
-        handleBlur() {
-            this.isInputSearch = false;
+            if (!this.isInputSearch) {
+                this.isInputSearch = true;
+                if (this.search.trim() !== '' || (this.searchResults.length === 0 && !this.isSearch)) {
+                    await this.handleSearch();
+                }
+            }
         },
         formatDate(date) {
             const dateObj = new Date(date);
@@ -85,26 +130,22 @@ export default {
     mounted() {
         this.fetchCinemas();
         document.addEventListener('click', this.handleClickOutside);
+        document.addEventListener('click', this.handleCloseSearchOutside);
     },
     beforeDestroy() {
         document.removeEventListener('click', this.handleClickOutside);
+        document.removeEventListener('click', this.handleCloseSearchOutside);
     },
     template: `
         <nav class="sticky left-0 top-0 z-[9999] w-full bg-secondary/50 backdrop-blur-2xl px-4 md:px-6">
             <div class="container max-w-6xl flex flex-col m-auto">
                 <div class="flex flex-row-reverse md:flex-row lg:flex-row items-center justify-between relative py-4 lg:py-6">
                     <!-- Search -->
-                    <div class="relative max-full order-1 md:order-1 z-10">
-                        <input type="text" v-model="search" @blur="handleBlur" @focus="handleFocus" @input="handleSearch" id="search" class="w-full font-light grow py-2 px-4 text-base text-white placeholder:text-gray-400 focus:outline-none sm:text-sm/6 rounded-full bg-gray-900/50 pr-10 ring-1 ring-gray-400/25 focus:ring-gray-400/50 hidden md:block" placeholder="Search Movies" />
-                        <button class="md:hidden text-gray-200 hover:text-gray-100 transition-colors cursor-pointer">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                stroke="currentColor" class="size-6 mt-2.5">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                            </svg>
-                        </button>
+                    <div class="relative max-full order-1 md:order-1 z-10" ref="searchDropdown">
+                        <input type="text" v-model="search" @focus="handleFocus" @input="handleSearch" id="search" name="search" class="w-full font-light grow py-2 px-4 text-base text-white placeholder:text-gray-400 focus:outline-none sm:text-sm/6 rounded-full bg-gray-900/50 pr-10 ring-1 ring-gray-400/25 focus:ring-gray-400/50 hidden md:block" placeholder="Search Movies" />
+                        
                         <div class="absolute right-0 top-1/2 flex -translate-x-4 -translate-y-1/2 cursor-pointer items-center gap-2 text-gray-200">
-                            <svg v-if="!isSearch" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            <svg v-if="!isSearch" @click="alert('hello')" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                 stroke="currentColor" class="size-6">
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                 d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
@@ -122,11 +163,14 @@ export default {
                         </div>
                         <div class="absolute left-0 top-[50px] z-[50] h-[488px] max-h-[488px] w-[300px] overflow-auto rounded-xl border border-gray-200 bg-black p-6 md:w-[446px] lg:top-[67px]" :class="[isInputSearch ? 'transition block' : 'transition hidden']">
                             <h4 class="text-2xl font-semibold text-gray-200 mb-4">Search</h4>
-                            <ul>
+                            <div v-if="isLoading" class="h-full flex flex-col justify-center items-center justify-center space-y-2">
+                                <div class="border border-4 border-t-red-500 border-white w-10 h-10 p-3 rounded-full animate-spin"></div>
+                                <p class="text-white font-medium tracking-wide">Loading...</p>
+                            </div>
+                            <ul v-else>
                                 <li
                                     v-for="(result, index) in searchResults"
                                     :key="index"
-                                    class="[&:not(:first-child)]:pt-4 [&:not(:last-child)]:border-b [&:not(:last-child)]:pb-4 [&:not(:last-child)]:gradient-border"
                                 >
                                     <a href="#" class="flex gap-4">
                                         <div class="h-[110px] w-[76px] overflow-hidden rounded">
@@ -140,18 +184,23 @@ export default {
                                     <div v-if="index !== searchResults.length - 1" class="divider my-4"></div>
                                 </li>
                             </ul>
+
+                            <div v-if="searchResults.length === 0 && !isLoading" class="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center gap-4">
+                                <img src="assets/not-found.svg" alt="No Movies Found" />
+                                <h1 class="text-center text-md font-bold text-white">No movies were found, Please try other movie title</h1>
+                            </div>
                         </div>
                     </div>
                     <!-- Logo -->
                     <div class="flex items-center absolute left-1/2 -translate-x-1/2">
                         <a href="#" class="flex items-center">
-                            <img src="assets/legend-cinema-logo.png" alt="Legend Cinema" class="w-24 md:w-24 lg:w-28" />
+                            <img src="assets/legend-cinema-logo.png" alt="Legend Cinema" class="w-18 md:w-24 lg:w-28" />
                         </a>
                     </div>
                     <!-- Authentication Button With Icon -->
                     <div class="flex items-center gap-x-2 sm:gap-x-2 md:gap-x-2 lg:gap-x-4 order-2 md:order-2 z-10">
-                        <button class="flex items-center gap-x-2 text-gray-200 hover:text-gray-100 transition-colors cursor-pointer border border-gray-400/25 hover:border-gray-400/50 rounded-full p-2 md:px-6 md:py-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
+                        <button class="flex items-center gap-x-2 text-gray-200 hover:text-gray-100 transition-colors cursor-pointer border border-gray-400/25 hover:border-gray-400/50 rounded-full p-1.5 md:p-2 md:px-6 md:py-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-5">
                                 <path fill-rule="evenodd"
                                 d="M1.5 6.375c0-1.036.84-1.875 1.875-1.875h17.25c1.035 0 1.875.84 1.875 1.875v3.026a.75.75 0 0 1-.375.65 2.249 2.249 0 0 0 0 3.898.75.75 0 0 1 .375.65v3.026c0 1.035-.84 1.875-1.875 1.875H3.375A1.875 1.875 0 0 1 1.5 17.625v-3.026a.75.75 0 0 1 .374-.65 2.249 2.249 0 0 0 0-3.898.75.75 0 0 1-.374-.65V6.375Zm15-1.125a.75.75 0 0 1 .75.75v.75a.75.75 0 0 1-1.5 0V6a.75.75 0 0 1 .75-.75Zm.75 4.5a.75.75 0 0 0-1.5 0v.75a.75.75 0 0 0 1.5 0v-.75Zm-.75 3a.75.75 0 0 1 .75.75v.75a.75.75 0 0 1-1.5 0v-.75a.75.75 0 0 1 .75-.75Zm.75 4.5a.75.75 0 0 0-1.5 0V18a.75.75 0 0 0 1.5 0v-.75ZM6 12a.75.75 0 0 1 .75-.75H12a.75.75 0 0 1 0 1.5H6.75A.75.75 0 0 1 6 12Zm.75 2.25a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3Z"
                                 clip-rule="evenodd" />
@@ -159,8 +208,8 @@ export default {
                             <span class="hidden md:inline">Tecket</span>
                         </button>
 
-                        <button class="flex items-center gap-x-2 text-gray-200 hover:text-gray-100 transition-colors cursor-pointer border border-gray-400/25 hover:border-gray-400/50 rounded-full p-2 md:px-6 md:py-2 hidden md:flex">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
+                        <button class="flex items-center gap-x-2 text-gray-200 hover:text-gray-100 transition-colors cursor-pointer border border-gray-400/25 hover:border-gray-400/50 rounded-full p-1.5 md:p-2 md:px-6 md:py-2 hidden md:flex">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-5">
                                 <path fill-rule="evenodd"
                                 d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z"
                                 clip-rule="evenodd" />
@@ -168,8 +217,8 @@ export default {
                             <span class="hidden md:inline">Join Now</span>
                         </button>
 
-                        <button class="flex items-center gap-x-2 text-gray-200 hover:text-gray-100 transition-colors cursor-pointer border border-gray-400/25 hover:border-gray-400/50 rounded-full p-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6">
+                        <button class="flex items-center gap-x-2 text-gray-200 hover:text-gray-100 transition-colors cursor-pointer border border-gray-400/25 hover:border-gray-400/50 rounded-full p-1.5 md:p-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-5">
                                 <path fill-rule="evenodd"
                                 d="M5.25 9a6.75 6.75 0 0 1 13.5 0v.75c0 2.123.8 4.057 2.118 5.52a.75.75 0 0 1-.297 1.206c-1.544.57-3.16.99-4.831 1.243a3.75 3.75 0 1 1-7.48 0 24.585 24.585 0 0 1-4.831-1.244.75.75 0 0 1-.298-1.205A8.217 8.217 0 0 0 5.25 9.75V9Zm4.502 8.9a2.25 2.25 0 1 0 4.496 0 25.057 25.057 0 0 1-4.496 0Z"
                                 clip-rule="evenodd" />
@@ -185,28 +234,17 @@ export default {
                     <!-- Navigation -->
                     <nav class="flex flex-col py-4 sm:flex-row sm:justify-between sm:items-center sm:gap-x-4 hidden md:flex">
                         <ul class="flex flex-col sm:flex-row sm:items-center gap-x-3 sm:gap-x-6 text-sm font-medium text-gray-200">
-                            <li>
-                                <a href="#" class="hover:text-gray-100 text-base text-gray-200 font-base hover:font-bold transition-colors cursor-pointer flex items-center gap-x-3">
-                                    <i class="fa-solid fa-house text-red-500 size-4"></i>
-                                    <span>Home</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" class="hover:text-gray-100 text-base text-gray-300 font-base hover:font-bold transition-colors cursor-pointer flex items-center gap-x-2">
-                                    <i class="fa fa-location-dot size-4"></i>
-                                    <span>Cinemas</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" class="hover:text-gray-100 text-base text-gray-300 font-base hover:font-bold transition-colors cursor-pointer flex items-center gap-x-2">
-                                    <i class="fa fa-tags size-4"></i>
-                                    <span>Offers</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" class="hover:text-gray-100 text-base text-gray-300 font-base hover:font-bold transition-colors cursor-pointer flex items-center gap-x-2">
-                                    <i class="fa-solid fa-wine-glass size-4"></i>
-                                    <span>F&B</span>
+                            <li
+                                v-for="(item, index) in navbarItems"
+                                :key="index"
+                                :class="[item.showWhenSmall ? 'hidden' : 'block']"
+                            >
+                                <a  :href="item.href"
+                                    :class="[item.active ? 'text-gray-200' : 'text-gray-300']"
+                                    class="hover:text-gray-100 text-base font-normal hover:font-normal cursor-pointer flex items-center gap-x-3"
+                                >
+                                    <i class="text-red-500 size-4" :class="item.iconClass"></i>
+                                    <span>{{item.title}}</span>
                                 </a>
                             </li>
                         </ul>
@@ -215,13 +253,8 @@ export default {
                     <!-- Select location -->
                     <div class="relative w-full sm:w-full md:w-auto lg:w-auto" ref="cinemaDropdown">
                         <button class="flex items-center gap-2 w-full justify-between py-2.5 lg:py-4 cursor-pointer" @click="toggleDropdown">
-                            <div class="flex text-left gap-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                    stroke="currentColor" class="size-5 text-red-500">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-                                </svg>
+                            <div class="flex text-left items-center gap-1">
+                                <img src="assets/location.svg" alt="Cinema Flag" class="img size-5 text-red-500" />
                                 <span class="text-sm text-gray-200 font-light line-clamp-1">{{cinema == undefined ? 'All Cinemas' : cinema.name}}</span>
                             </div>
                             <svg width="12" height="7" viewBox="0 0 12 7" fill="none" xmlns="http://www.w3.org/2000/svg" :class="[isOpen ? 'transition rotate-180' : 'transition']">
@@ -237,15 +270,10 @@ export default {
                         <ul class="absolute max-h-[60vh] overflow-y-auto rounded-xl border bg-black p-3 lg:p-4 right-0 border-gray-200/50 w-full lg:w-[400px] xl:w-[544px] transition" :class="[isOpen ? 'block' : 'hidden']">
                             <li class="cursor-pointer" @click="handleChange(null)">
                                 <div class="flex items-center gap-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                        stroke="currentColor" class="size-5 text-red-500">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-                                    </svg>
-                                    <span :class="[activeCinemaId === null ? 'text-red-500' : 'text-gray-200', 'text-base font-bold line-clamp-1']">All Cinemas</span>
+                                    <img src="assets/location.svg" alt="Cinema Flag" class="img size-5 text-red-500" />
+                                    <span :class="[activeCinemaId === null ? 'text-red-500' : 'text-gray-200', 'text-base font-light line-clamp-1']">All Cinemas</span>
                                 </div>
-                                <div class="divider my-4"></div>
+                                <div class="divider my-2"></div>
                             </li>
                             <li
                                 v-for="(cinema, index) in cinemas"
@@ -254,15 +282,10 @@ export default {
                                 class="cursor-pointer"
                             >
                                 <div class="flex items-center gap-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                        stroke="currentColor" class="size-5 text-red-500">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-                                    </svg>
-                                    <span :class="[activeCinemaId === cinema.vistaCinemaId ? 'text-red-500' : 'text-gray-200', 'text-base font-bold line-clamp-1']">{{cinema.name}}</span>
+                                    <img src="assets/location.svg" alt="Cinema Flag" class="img size-5 text-red-500" />
+                                    <span :class="[activeCinemaId === cinema.vistaCinemaId ? 'text-red-500' : 'text-gray-200', 'text-base font-light line-clamp-1']">{{cinema.name}}</span>
                                 </div>
-                                <div v-if="index !== cinemas.length - 1" class="divider my-4"></div>
+                                <div v-if="index !== cinemas.length - 1" class="divider my-2"></div>
                             </li>
                         </ul>
                     </div>
@@ -272,47 +295,25 @@ export default {
 
         <div class="fixed bottom-0 z-50 block w-full bg-gray-dark/70 backdrop-blur-2xl md:hidden">
             <nav class="w-full backdrop-blur-md">
-                <ul class="container flex items-center justify-between px-6 py-4 md:py-6 mx-auto">
-                    <li>
-                        <a href="#" class="hover:text-slate-100 text-base text-slate-200 font-base hover:font-bold transition-colors cursor-pointer flex flex-col justify-center items-center gap-y-2">
-                            <div class="rounded-full px-4 py-1 bg-red-500/75">
-                                <i class="fa-solid fa-house text-white"></i>
+                <ul class="container flex items-center justify-between px-6 py-2 md:py-4 mx-auto">
+                    <li
+                        v-for="(item, index) in navbarItems"
+                        :key="index"
+                    >
+                        <a :href="item.href"
+                            class="hover:text-slate-100 text-base font-normal hover:font-normal transition-colors cursor-pointer flex flex-col justify-center items-center gap-y-1"
+                            :class="[item.active ? 'text-gray-200' : 'text-gray-300']"
+                        >
+                            <div 
+                                class="rounded-full px-4 py-1"
+                                :class="[item.active ? 'bg-red-800/75' : '']"
+                            >
+                                <i :class="item.iconClass"></i>
                             </div>
-                            <span class="text-sm">Home</span>
+                            <span class="text-sm">{{item.title}}</span>
                         </a>
                     </li>
-                    <li>
-                        <a href="#" class="hover:text-slate-100 text-base text-slate-200 font-base hover:font-bold transition-colors cursor-pointer flex flex-col justify-center items-center gap-y-2">
-                            <div class="rounded-full px-4 py-1">
-                                <i class="fa fa-location-dot text-white"></i>
-                            </div>
-                            <span class="text-sm">Cinemas</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="hover:text-slate-100 text-base text-slate-200 font-base hover:font-bold transition-colors cursor-pointer flex flex-col justify-center items-center gap-y-2">
-                            <div class="rounded-full px-4 py-1">
-                                <i class="fa fa-tags text-white"></i>
-                            </div>
-                            <span class="text-sm">Offers</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="hover:text-slate-100 text-base text-slate-200 font-base hover:font-bold transition-colors cursor-pointer flex flex-col justify-center items-center gap-y-2">
-                            <div class="rounded-full px-4 py-1">
-                                <i class="fa-solid fa-wine-glass text-white"></i>
-                            </div>
-                            <span class="text-sm">F&B</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="hover:text-slate-100 text-base text-slate-200 font-base hover:font-bold transition-colors cursor-pointer flex flex-col justify-center items-center gap-y-2">
-                            <div class="rounded-full px-4 py-1">
-                                <i class="fa-solid fa-chess-board text-white"></i>
-                            </div>
-                            <span class="text-sm">More</span>
-                        </a>
-                    </li>
+                    
                 </ul>
             </nav>
         </div>
