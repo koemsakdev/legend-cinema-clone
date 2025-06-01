@@ -5,56 +5,88 @@ export default {
     components: {
         posterCard
     },
+    props: {
+        selectedCinemaId: {
+            type: String,
+            default: null
+        }
+    },
     data() {
         return {
             activeTab: '',
             tabs: [],
             nowShowing: [],
             isLoading: false,
-            baseUrl: "https://api.legend.com.kh"
+            baseUrl: "https://api.legend.com.kh",
+            dates: []
+        }
+    },
+    watch: {
+        async selectedCinemaId(newId) {
+            this.getMovieList(this.activeTab); // Refresh movie list with new cinema ID
+            // Change the tabs value based on the new cinema ID
+            this.tabs = await this.getNext7Days();
+            this.activeTab = this.tabs[0].id;
+            this.getMovieList(this.activeTab);
         }
     },
     methods: {
-        getNext7Days() {
+        async getNext7Days() {
             const tabs = [];
-            const today = new Date();
-            for (let i = 0; i < 7; i++) {
-                const date = new Date(today);
-                date.setDate(today.getDate() + i);
+            const dates = await this.getFilterDate();
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const currentDate = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0));
+            const today = currentDate.toISOString();
+            dates.forEach((d) => {
+                const date = new Date(d.date);
                 const day = date.getDate();
                 const month = date.toLocaleDateString('en-US', {
                     month: 'short'
                 });
-                const label = i === 0 ?
+                const label = today === d.date ?
                     `Today, ${month}, ${day}` :
-                    `${date.toLocaleDateString('en-US', { weekday: 'short' })}, ${month}, ${day}`;
+                    `${date.toLocaleDateString('en-US', { weekday:'short' })}, ${month}, ${day}`;
                 tabs.push({
                     id: date.toISOString(),
                     date: date.toISOString(),
                     label
                 });
-            }
+            });
             return tabs;
         },
         async getMovieList(date) {
             try {
                 this.isLoading = true;
-                const response = await axios.get(
-                    `${this.baseUrl}/scheduled-films?limit=100&date=${date}&vistaCinemaId&sort=latest-released`
-                );
+                let url = this.selectedCinemaId ?
+                    `${this.baseUrl}/scheduled-films?limit=100&date=${date}&vistaCinemaId=${this.selectedCinemaId}&sort=latest-released` :
+                    `${this.baseUrl}/scheduled-films?limit=100&date=${date}&sort=latest-released`;
+                const response = await axios.get(url);
                 this.nowShowing = response.data.rows;
                 this.isLoading = false;
             } catch (error) {
                 console.error('Failed to fetch movie list:', error);
             }
         },
-        handleChange(tab) {
+        async handleChange(tab) {
             this.activeTab = tab;
-            this.getMovieList(tab);
+            await this.getMovieList(tab);
+        },
+        async getFilterDate() {
+            try {
+                let url = this.selectedCinemaId ?
+                    `${this.baseUrl}/scheduled-films/filter-date?vistaCinemaId=${this.selectedCinemaId}` :
+                    `${this.baseUrl}/scheduled-films/filter-date`;
+                const response = await axios.get(url);
+                return response.data;
+            } catch (error) {
+                console.error('Failed to fetch filter date:', error);
+            }
         }
     },
     mounted: async function() {
-        this.tabs = this.getNext7Days();
+        this.tabs = await this.getNext7Days();
         this.activeTab = this.tabs[0].id;
         await this.getMovieList(this.activeTab);
     },

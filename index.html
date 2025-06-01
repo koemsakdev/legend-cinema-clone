@@ -16,38 +16,11 @@
 
 <body>
   <div id="app">
-    <navbar></navbar>
-
-    <main class="mb-8 min-h-screen lg:mb-20 md:px-6">
-      <div class="container max-w-6xl mx-auto">
-        <div
-          class="absolute left-0 top-0 w-full overflow-hidden blur-lg max-lg:aspect-video max-lg:max-h-[600px] lg:h-[670px] xl:h-[760px]">
-          <img src="assets/banner-1.jpeg" alt="Image slide"
-            class="max-w-full transition-opacity opacity-100 h-full w-full object-cover transition" id="img-bg" />
-          <div class="hero-overlay-1 absolute top-0 h-full w-full"></div>
-          <div class="hero-overlay-2 absolute bottom-0 h-[4.125rem] w-full backdrop-blur-[2px]"></div>
-        </div>
-        <div class="max-lg:full-width">
-          <div class="swiper mySwiperHeader w-full md:my-10">
-            <div class="swiper-wrapper" id="mySwiperHeader"></div>
-            <div class="swiper-pagination swiper-pagination-bullets swiper-pagination-horizontal"></div>
-          </div>
-        </div>
-        <div class="relative z-10 mt-6 lg:mt-20 ">
-          <!-- Tap -->
-          <div class="full-width">
-            <div class="mb-10">
-              <movie-tabs></movie-tabs>
-            </div>
-          </div>
-        </div>
-
-        <tesnimol></tesnimol>
-      </div>
+    <navbar v-if="$route.path !== '/search'"></navbar>
+    <main :class="$route.path !== '/search' ? 'mb-8 min-h-screen lg:mb-20 md:px-6' : ''">
+      <router-view></router-view>
     </main>
-
-    <nav-footer>
-      </nav-foot>
+    <nav-footer v-if="$route.path !== '/search'"></nav-foot>
   </div>
 
   <!-- Vue JS 3 -->
@@ -58,8 +31,7 @@
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-  <script src="scripts/app.js"></script>
-  <script src="scripts/vueApp.js" type="module"></script>
+  <script src="scripts/app.js" type="module"></script>
 </body>
 
 </html>

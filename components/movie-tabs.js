@@ -6,6 +6,12 @@ export default {
         DayTaps,
         monthTaps
     },
+    props: {
+        selectedCinemaId: {
+            type: String,
+            default: null
+        }
+    },
     data() {
         return {
             activeTab: 'now-showing',
@@ -41,7 +47,7 @@ export default {
 
             <div class="mt-10">
                 <div v-if="activeTab === 'now-showing'" class="animate-fade-in">
-                    <day-taps></day-taps>
+                    <day-taps :selected-cinema-id="selectedCinemaId"></day-taps>
                 </div>
                 <div v-else class="animate-fade-in">
                     <month-taps></month-taps>

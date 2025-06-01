@@ -13,8 +13,7 @@ export default {
             isSearch: false,
             isInputSearch: false,
             limit: 10,
-            navbarItems: [
-                {
+            navbarItems: [{
                     title: "Home",
                     href: "/",
                     active: true,
@@ -65,7 +64,10 @@ export default {
         async handleChange(id) {
             this.activeCinemaId = id;
             this.cinema = this.cinemas.find(cinema => cinema.vistaCinemaId === id);
-            console.log(this.cinema);
+            // Dispatch event for cinema change
+            window.dispatchEvent(new CustomEvent('cinema-changed', {
+                detail: id
+            }));
             this.isOpen = false;
         },
         toggleDropdown() {
@@ -79,7 +81,7 @@ export default {
         },
         handleCloseSearchOutside(event) {
             const dropdown = this.$refs.searchDropdown;
-            if (dropdown &&!dropdown.contains(event.target)) {
+            if (dropdown && !dropdown.contains(event.target)) {
                 this.isInputSearch = false;
             }
         },
@@ -122,10 +124,12 @@ export default {
         formatDate(date) {
             const dateObj = new Date(date);
             const day = dateObj.getDate();
-            const month = dateObj.toLocaleString('default', { month: 'short' });
+            const month = dateObj.toLocaleString('default', {
+                month: 'short'
+            });
             const year = dateObj.getFullYear();
             return `${day} ${month} ${year}`;
-        }
+        },
     },
     mounted() {
         this.fetchCinemas();
@@ -137,19 +141,21 @@ export default {
         document.removeEventListener('click', this.handleCloseSearchOutside);
     },
     template: `
-        <nav class="sticky left-0 top-0 z-[9999] w-full bg-secondary/50 backdrop-blur-2xl px-4 md:px-6">
+        <nav class="sticky left-0 top-0 z-[999] w-full bg-secondary/50 backdrop-blur-2xl px-4 md:px-6">
             <div class="container max-w-6xl flex flex-col m-auto">
                 <div class="flex flex-row-reverse md:flex-row lg:flex-row items-center justify-between relative py-4 lg:py-6">
                     <!-- Search -->
                     <div class="relative max-full order-1 md:order-1 z-10" ref="searchDropdown">
-                        <input type="text" v-model="search" @focus="handleFocus" @input="handleSearch" id="search" name="search" class="w-full font-light grow py-2 px-4 text-base text-white placeholder:text-gray-400 focus:outline-none sm:text-sm/6 rounded-full bg-gray-900/50 pr-10 ring-1 ring-gray-400/25 focus:ring-gray-400/50 hidden md:block" placeholder="Search Movies" />
+                        <input type="text" v-model="search" autocomplete="off" @focus="handleFocus" @input="handleSearch" id="search" name="search" class="w-full font-light grow py-2 px-4 text-base text-white placeholder:text-gray-400 focus:outline-none sm:text-sm/6 rounded-full bg-gray-900/50 pr-10 ring-1 ring-gray-400/25 focus:ring-gray-400/50 hidden md:block" placeholder="Search Movies" />
                         
                         <div class="absolute right-0 top-1/2 flex -translate-x-4 -translate-y-1/2 cursor-pointer items-center gap-2 text-gray-200">
-                            <svg v-if="!isSearch" @click="alert('hello')" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                stroke="currentColor" class="size-6">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                            </svg>
+                            <router-link to="/search" v-if="!isSearch" class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                    stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                                </svg>
+                            </router-link>
                             <svg v-else @click="handleClearSearch()" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <g id="gridicons:cross">
                                     <path 
@@ -193,9 +199,9 @@ export default {
                     </div>
                     <!-- Logo -->
                     <div class="flex items-center absolute left-1/2 -translate-x-1/2">
-                        <a href="#" class="flex items-center">
+                        <router-link to="/" class="flex items-center">
                             <img src="assets/legend-cinema-logo.png" alt="Legend Cinema" class="w-18 md:w-24 lg:w-28" />
-                        </a>
+                        </router-link>
                     </div>
                     <!-- Authentication Button With Icon -->
                     <div class="flex items-center gap-x-2 sm:gap-x-2 md:gap-x-2 lg:gap-x-4 order-2 md:order-2 z-10">
@@ -239,13 +245,13 @@ export default {
                                 :key="index"
                                 :class="[item.showWhenSmall ? 'hidden' : 'block']"
                             >
-                                <a  :href="item.href"
+                                <router-link :to="item.href"
                                     :class="[item.active ? 'text-gray-200' : 'text-gray-300']"
                                     class="hover:text-gray-100 text-base font-normal hover:font-normal cursor-pointer flex items-center gap-x-3"
                                 >
                                     <i class="text-red-500 size-4" :class="item.iconClass"></i>
                                     <span>{{item.title}}</span>
-                                </a>
+                                </router-link>
                             </li>
                         </ul>
                     </nav>
@@ -300,7 +306,7 @@ export default {
                         v-for="(item, index) in navbarItems"
                         :key="index"
                     >
-                        <a :href="item.href"
+                        <router-link :to="item.href"
                             class="hover:text-slate-100 text-base font-normal hover:font-normal transition-colors cursor-pointer flex flex-col justify-center items-center gap-y-1"
                             :class="[item.active ? 'text-gray-200' : 'text-gray-300']"
                         >
@@ -311,9 +317,8 @@ export default {
                                 <i :class="item.iconClass"></i>
                             </div>
                             <span class="text-sm">{{item.title}}</span>
-                        </a>
+                        </router-link>
                     </li>
-                    
                 </ul>
             </nav>
         </div>
