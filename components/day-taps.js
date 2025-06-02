@@ -34,18 +34,13 @@ export default {
         async getNext7Days() {
             const tabs = [];
             const dates = await this.getFilterDate();
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth();
-            const currentDate = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0));
-            const today = currentDate.toISOString();
             dates.forEach((d) => {
                 const date = new Date(d.date);
                 const day = date.getDate();
                 const month = date.toLocaleDateString('en-US', {
                     month: 'short'
                 });
-                const label = today === d.date ?
+                const label = dates[0].date === d.date ?
                     `Today, ${month}, ${day}` :
                     `${date.toLocaleDateString('en-US', { weekday:'short' })}, ${month}, ${day}`;
                 tabs.push({
@@ -104,13 +99,13 @@ export default {
                             :class="[
                                 'opacity-100 w-[60px] rounded-[10px] border border-gray-500 bg-black p-2 lg:w-[10.25rem] cursor-pointer',
                                 activeTab === tab.id
-                                    ? 'font-normal border-red-500 border-2' 
-                                    : 'border-0.5'
+                                    ? 'font-normal border-red-500 hover:border-red-500 border-2' 
+                                    : 'border-0.5 hover:border-white'
                             ]"
                         >
-                            <div class="flex flex-col gap-0.5">
+                            <div class="flex flex-col">
                                 <p class="text-gray-300 text-xs sm:text-sm">{{ tab.label.split(",")[0] }}</p>
-                                <h3 class="text-white font-extrabold text-xl">{{ tab.label.split(",")[2] }}</h3>
+                                <h3 class="text-white font-extrabold text-lg">{{ tab.label.split(",")[2] }}</h3>
                                 <p class="text-gray-300 text-xs sm:text-sm">{{ tab.label.split(",")[1] }}</p>
                             </div>
                         </button>

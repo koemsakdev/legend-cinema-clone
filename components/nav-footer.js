@@ -88,7 +88,7 @@ export default {
         }
     },
     template: `
-        <footer class="relative bg-black pb-24 pt-9 lg:py-9 px-4 md:px-0">
+        <footer class="relative bg-black pb-24 pt-9 lg:py-9 px-4 sm:px-6">
             <div class="container px-4 md:px-0 max-w-6xl mx-auto">
                 <div class="flex flex-wrap justify-between gap-x-12 gap-y-6">
                     <div>

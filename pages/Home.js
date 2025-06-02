@@ -27,9 +27,7 @@ export default {
                     </div>
                 `;
             }
-
             swiperWrapper.innerHTML = slidesHTML;
-
             new Swiper(".mySwiperHeader", {
                 pagination: {
                     el: ".swiper-pagination",
@@ -65,31 +63,33 @@ export default {
         });
     },
     template: `
-        <div class="container max-w-6xl mx-auto">
-            <div class="absolute left-0 top-0 w-full overflow-hidden blur-lg max-lg:aspect-video max-lg:max-h-[600px] lg:h-[670px] xl:h-[760px]">
-                <img 
-                    src="assets/banner-1.jpeg" alt="Image slide"
-                    class="max-w-full transition-opacity opacity-100 h-full w-full object-cover transition" id="img-bg" 
-                />
-                <div class="hero-overlay-1 absolute top-0 h-full w-full"></div>
-                <div class="hero-overlay-2 absolute bottom-0 h-[4.125rem] w-full backdrop-blur-[2px]"></div>
-            </div>
-            <div class="max-lg:full-width">
-                <div class="swiper mySwiperHeader w-full md:my-10">
-                    <div class="swiper-wrapper" id="mySwiperHeader"></div>
-                    <div class="swiper-pagination swiper-pagination-bullets swiper-pagination-horizontal"></div>
+        <main class="mb-8 min-h-screen lg:mb-20 md:px-6">
+            <div class="container max-w-6xl mx-auto">
+                <div class="absolute left-0 top-0 w-full overflow-hidden blur-lg max-lg:aspect-video max-lg:max-h-[600px] lg:h-[670px] xl:h-[760px]">
+                    <img 
+                        src="assets/banner-1.jpeg" alt="Image slide"
+                        class="max-w-full transition-opacity opacity-100 h-full w-full object-cover transition" id="img-bg" 
+                    />
+                    <div class="hero-overlay-1 absolute top-0 h-full w-full"></div>
+                    <div class="hero-overlay-2 absolute bottom-0 h-[4.125rem] w-full backdrop-blur-[2px]"></div>
                 </div>
-            </div>
-            <div class="relative z-10 mt-6 lg:mt-20 ">
-                <!-- Tap -->
-                <div class="full-width">
-                    <div class="mb-10">
-                        <movie-tabs :selected-cinema-id="selectedCinemaId"></movie-tabs>
+                <div class="max-lg:full-width">
+                    <div class="swiper mySwiperHeader w-full md:my-10">
+                        <div class="swiper-wrapper" id="mySwiperHeader"></div>
+                        <div class="swiper-pagination swiper-pagination-bullets swiper-pagination-horizontal"></div>
                     </div>
                 </div>
-            </div>
+                <div class="relative z-10 mt-6 lg:mt-20 ">
+                    <!-- Tap -->
+                    <div class="full-width">
+                        <div class="mb-10">
+                            <movie-tabs :selected-cinema-id="selectedCinemaId"></movie-tabs>
+                        </div>
+                    </div>
+                </div>
 
-            <tesnimol></tesnimol>
-      </div>
+                <tesnimol></tesnimol>
+            </div>
+        </main>
     `
 }

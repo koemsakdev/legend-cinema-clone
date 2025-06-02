@@ -17,9 +17,7 @@
 <body>
   <div id="app">
     <navbar v-if="$route.path !== '/search'"></navbar>
-    <main :class="$route.path !== '/search' ? 'mb-8 min-h-screen lg:mb-20 md:px-6' : ''">
-      <router-view></router-view>
-    </main>
+    <router-view></router-view>
     <nav-footer v-if="$route.path !== '/search'"></nav-foot>
   </div>
 

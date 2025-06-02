@@ -17,7 +17,7 @@ export default {
     },
     template: `
         <div class="w-full h-full">
-            <a href="#" class="flex flex-col gap-4">
+            <router-link :to="'/movies/' + movie.hopk" class="flex flex-col gap-4">
                 <div class="relative h-full w-full overflow-hidden">
                     <img :src="movie.bannerImageUrl" alt="Image Banner" class="max-w-full transition-opacity opacity-100 h-auto w-full rounded-xl">
                     <div class="absolute left-0 top-0 h-[115px] w-[124px]">
@@ -31,7 +31,7 @@ export default {
                     <img :src="movie.ageRatingImageUrl" alt="Image Rate" class="img object-cover">
                 </div>
                 <p class="text-white text-base font-medium">{{ movie.title }}</p>
-            </a>
+            </router-link>
         </div>
     `
 }
