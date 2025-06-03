@@ -1,17 +1,20 @@
+import CensorModal from "../components/censor-modal.js";
 export default {
     name: "Detail",
+    components: {
+        CensorModal
+    },
     data() {
         return {
             movieId: this.$route.params.id,
             cinemas: [],
             cinema: null,
             selectedCinemaId: null,
-            censorRating: null,
+            censorRating: [],
             film: [],
             groupCinemas: [],
             baseUrl: "https://api.legend.com.kh",
-            tabs: [
-                {
+            tabs: [{
                     id: 1,
                     name: "Showtime",
                 },
@@ -26,6 +29,9 @@ export default {
             showLocationList: false,
             activeCinemaId: null,
             isLoading: false,
+            isCollapsed: {},
+            showCensorModal: false,
+            selectedSession: null,
         }
     },
     methods: {
@@ -67,27 +73,35 @@ export default {
         async getFilm(movieId) {
             try {
                 const res = await axios.get(`${this.baseUrl}/scheduled-films/${movieId}`);
-                this.film = res.data;                
+                this.film = res.data;
             } catch (error) {
                 console.error('Failed to fetch movie list:', error);
             }
         },
-        async getGroupCinemas() {
-            const res = await axios.get(`${this.baseUrl}/scheduled-films/${this.movieId}/group-sessions?date=${this.activeDay}&vistaFilmId=${this.activeCinemaId}`);
-            console.log(res.data);
-            this.groupCinemas = res.data;
+        async getGroupCinemas(activeDay) {
+            try {
+                let url = this.activeCinemaId ?
+                    `${this.baseUrl}/scheduled-films/${this.movieId}/group-sessions?date=${activeDay}&vistaCinemaId=${this.activeCinemaId}` :
+                    `${this.baseUrl}/scheduled-films/${this.movieId}/group-sessions?date=${activeDay}`;
+                const res = await axios.get(url);
+                this.groupCinemas = res.data;
+            } catch (error) {
+                console.error('Failed to fetch group cinemas:', error);
+            }
         },
         handleChangeTab(tab) {
             this.activeTab = tab.id;
         },
-        handleChangeDay(id) {
+        async handleChangeDay(id) {
             this.activeDay = id;
-            console.log(this.activeDay);
+            await this.getGroupCinemas(this.activeDay);
         },
         formatDate(date) {
             const dateObj = new Date(date);
             const day = dateObj.getDate();
-            const month = dateObj.toLocaleString('default', { month: 'short' });
+            const month = dateObj.toLocaleString('default', {
+                month: 'short'
+            });
             const year = dateObj.getFullYear();
             return `${day} ${month} ${year}`;
         },
@@ -96,12 +110,24 @@ export default {
             const minutes = time % 60;
             return `${hours}h ${minutes}min`;
         },
+        formatDateTime(dateTime) {
+            const date = new Date(dateTime);
+            const hours = date.getHours();
+            const minutes = date.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const formattedHours = hours % 12 || 12;
+            const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+            return `${formattedHours < 9 ? "0" + formattedHours : formattedHours }:${formattedMinutes} ${ampm}`;  
+        },
         async getCensorRating(rating) {
             const res = await axios.get(`${this.baseUrl}/censor-ratings/${rating}`);
             this.censorRating = res.data;
         },
         handleShowLocationList() {
             this.showLocationList = !this.showLocationList;
+        },
+        handleCollapse(index) {
+            this.$set(this.isCollapsed, index, !this.isCollapsed[index]);
         },
         handleClickOutside(event) {
             const dropdown = this.$refs.legendLocationList;
@@ -114,22 +140,34 @@ export default {
             this.cinema = this.cinemas.find(cinema => cinema.vistaCinemaId === cinemaId);
             this.days = await this.getDays();
             this.activeDay = this.days[0].id;
+            await this.getGroupCinemas(this.activeDay);
+
             this.showLocationList = false;
         },
+        handleSessionClick(session) {
+            this.selectedSession = session;
+            this.showCensorModal = true;
+        },
+        handleCloseModal() {
+            this.showCensorModal = false;
+            this.selectedSession = null;
+        }
     },
     async mounted() {
-        await this.getFilm(this.movieId);
-        await this.getCensorRating("G");
-        await this.getCinemas();
-
-        // await this.getGroupCinemas();
-
         this.days = await this.getDays();
         this.activeDay = this.days[0].id;
+
+        await this.getFilm(this.movieId);
+        await this.getCensorRating(this.film.rating);
+        await this.getCinemas();
+        await this.getGroupCinemas(this.activeDay);
+
+        // console.log(this.censorRating.description);
+
         document.addEventListener('click', this.handleClickOutside);
     },
     template: `
-        <div class="w-full">
+        <div class="w-full overflow-x-hidden">
             <div class="container max-w-6xl mx-auto">
                 <div class="absolute left-0 top-0 w-full overflow-hidden blur-lg h-[590px] xl:h-[670px]">
                     <img :src="film.backdropImageUrl" alt="Image slide" class="max-w-full transition-opacity opacity-100 h-full w-full object-cover" />
@@ -214,7 +252,7 @@ export default {
             <div class="mx-auto">
                 <div class="mt-10">
                     <div v-if="activeTab === 1" class="animate-fade-in mx-6 lg:mx-0">
-                        <div class="max-w-6xl mx-auto">
+                        <div class="max-w-6xl mx-auto mb-[4.75rem]">
                             <h1 class="text-2xl font-bold md:text-4xl text-white">Showtime</h1>
 
                             <div class="my-4 md:mb-6 md:mt-10">
@@ -280,50 +318,63 @@ export default {
                         </div>
                         <!-- Collapse fade in and out -->
                         <div class="full-width">
-                            <!-- Will be in loop -->
                             <div class="mb-[1.75rem] mt-6 md:[&:not(:last-child)]:mt-[3.75rem]">
-                                <button class="w-full bg-gradient-to-r from-gray-700/10 via-gray-700/30 to-gray-700/10 first:mt-0 cursor-pointer">
-                                    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4 py-[1.125rem] border-bottom-linea-divider">
-                                        <h3 class="font-bold md:text-md text-white">Legend Cinema 271 Mega Mall</h3>
-                                        <svg width="12" height="7" viewBox="0 0 12 7" fill="none" xmlns="http://www.w3.org/2000/svg" class="transition rotate-180">
-                                            <path
-                                                d="M0.594154 0.592566L0.594622 0.592089C0.66344 0.521721 0.72368 0.5 0.798736 0.5C0.873738 0.5 0.933524 0.521663 1.00175 0.591612L1.00222 0.592089L5.63463 5.3288L5.99209 5.69432L6.34956 5.3288L10.9978 0.575923C11.0463 0.526343 11.0995 0.5 11.1937 0.5C11.2772 0.5 11.3391 0.524277 11.4054 0.59209C11.4744 0.662668 11.5 0.729488 11.5 0.816719C11.5 0.903889 11.4745 0.97023 11.4059 1.04017C11.4059 1.04019 11.4059 1.04021 11.4058 1.04023L6.07783 6.47204L6.07732 6.47257C6.06745 6.48265 6.06072 6.48766 6.05762 6.48974C6.0547 6.49169 6.05442 6.49145 6.05653 6.49068C6.04281 6.49573 6.02354 6.50014 5.99465 6.5L5.99465 6.49999L5.99209 6.49999C5.96242 6.49999 5.94224 6.4954 5.92766 6.49003C5.92936 6.49066 5.92878 6.49072 5.92567 6.48865C5.92243 6.48649 5.91576 6.48154 5.90612 6.4718C5.90598 6.47166 5.90584 6.47151 5.9057 6.47137L0.578812 1.02454C0.527362 0.971928 0.5 0.913489 0.5 0.816072C0.5 0.72888 0.52555 0.662528 0.594154 0.592566Z"
-                                                fill="white" stroke="white">
-                                            </path>
-                                        </svg>
-                                    </div>
-                                </button>
-                                <div class="container max-w-6xl mx-auto">
-                                    <div class="my-10 [&:not(:last-child)]:mb-6">
-                                        <div class="mb-6">
-                                        <img
-                                            src="https://coolbeans.sgp1.digitaloceanspaces.com/legend-cinema-prod/bf74f9cf-235b-48b2-8af5-a8fcf0475ad2.png"
-                                            class="h-8 md:h-10" alt="2D">
-                                        </div>
-                                    </div>
-                                    <div class="[&:not(:last-child)]:mb-10">
-                                        <div class="mb-6 flex flex-wrap items-center gap-2">
-                                            <!-- Will be in loop -->
-                                            <div class="flex items-center gap-1 [&:not(:first-child)]:border-l [&:not(:first-child)]:border-white [&:not(:first-child)]:pl-2">
-                                                <img src="https://coolbeans.sgp1.digitaloceanspaces.com/legend-cinema-prod/bfa83b29-7edf-46dd-b072-e52cb62920aa.png" class="h-[22px] object-cover" alt="CH Sub">
+                                <template v-for="(group, index) in groupCinemas" :key="index">
+                                    <template v-if="group.formats.length > 0">
+                                        <button class="w-full bg-gradient-to-r from-gray-700/10 via-gray-700/30 to-gray-700/10 first:mt-0 cursor-pointer" @click="handleCollapse(index)">
+                                            <div class="max-w-6xl mx-auto flex items-center justify-between gap-4 py-[1.125rem] border-bottom-linea-divider">
+                                                <h3 class="font-bold md:text-md text-white">{{ group.name }}</h3>
+                                                <svg width="12" height="7" viewBox="0 0 12 7" fill="none" xmlns="http://www.w3.org/2000/svg" :class="[isCollapsed[index] ? 'transition' : 'transition rotate-180']">
+                                                    <path
+                                                        d="M0.594154 0.592566L0.594622 0.592089C0.66344 0.521721 0.72368 0.5 0.798736 0.5C0.873738 0.5 0.933524 0.521663 1.00175 0.591612L1.00222 0.592089L5.63463 5.3288L5.99209 5.69432L6.34956 5.3288L10.9978 0.575923C11.0463 0.526343 11.0995 0.5 11.1937 0.5C11.2772 0.5 11.3391 0.524277 11.4054 0.59209C11.4744 0.662668 11.5 0.729488 11.5 0.816719C11.5 0.903889 11.4745 0.97023 11.4059 1.04017C11.4059 1.04019 11.4059 1.04021 11.4058 1.04023L6.07783 6.47204L6.07732 6.47257C6.06745 6.48265 6.06072 6.48766 6.05762 6.48974C6.0547 6.49169 6.05442 6.49145 6.05653 6.49068C6.04281 6.49573 6.02354 6.50014 5.99465 6.5L5.99465 6.49999L5.99209 6.49999C5.96242 6.49999 5.94224 6.4954 5.92766 6.49003C5.92936 6.49066 5.92878 6.49072 5.92567 6.48865C5.92243 6.48649 5.91576 6.48154 5.90612 6.4718C5.90598 6.47166 5.90584 6.47151 5.9057 6.47137L0.578812 1.02454C0.527362 0.971928 0.5 0.913489 0.5 0.816072C0.5 0.72888 0.52555 0.662528 0.594154 0.592566Z"
+                                                        fill="white" stroke="white">
+                                                    </path>
+                                                </svg>
+                                            </div>
+                                        </button>
+                                        <div class="container max-w-6xl mx-auto mb-[1.75rem]" v-for="(format, index) in group.formats" :key="index" :class="[isCollapsed[index] ? 'transition hidden' : 'transition block']">
+                                            <div class="my-10 [&:not(:last-child)]:mb-6 flex flex-wrap items-center gap-4">
+                                                <div class="mb-6">
+                                                    <img
+                                                        :src="format.iconUrl"
+                                                        class="h-8 md:h-10" :alt="format.shortName">
+                                                </div>
+                                            </div>
+                                            <div class="[&:not(:last-child)]:mb-10" v-for="(g, index) in format.groups" :key="index">
+                                                <div class="mb-6 flex flex-wrap items-center gap-2">
+                                                    <div class="flex items-center gap-1 [&:not(:first-child)]:border-l [&:not(:first-child)]:border-white [&:not(:first-child)]:pl-2" v-for="(attr, index) in g.attributes" :key="index">
+                                                        <img :src="attr.iconUrl" class="h-[22px] object-cover" :alt="attr.shortName">
+                                                    </div>
+                                                </div>
+                                                <div class="flex flex-wrap items-center gap-x-2 gap-y-2.5 md:gap-6">
+                                                    <button 
+                                                        v-for="(sess, index) in g.sessions"
+                                                        :key="index"
+                                                        @click="handleSessionClick(sess)"
+                                                        class="flex items-center justify-center rounded-full border border-white text-white bg-gradient-to-r from-gray-dark/25 from-0% via-white/10 via-100% to-100% px-4 py-2.5 text-xs md:w-[10.25rem] md:py-3.5 md:text-base cursor-pointer"
+                                                    >
+                                                        {{ formatDateTime(sess.startTime) }}
+                                                    </button>
+
+                                                    <censor-modal
+                                                        :show="showCensorModal"
+                                                        :title="'Age Restriction'"
+                                                        :description="'This movie is rated ' + film.rating + '. Are you 18 or older?'"
+                                                        :redirect-path="'/booking/' + (selectedSession ? selectedSession.id : '')"
+                                                        @close="handleCloseModal"
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
-
-                                        <div class="flex flex-wrap items-center gap-x-2 gap-y-2.5 md:gap-6">
-                                            <!-- Will be in loop -->
-                                            <router-link to="/" class="flex items-center justify-center rounded-full border border-white text-white bg-gradient-to-r from-gray-dark/25 from-0% via-white/10 via-100% to-100% px-4 py-2.5 text-xs md:w-[10.25rem] md:py-3.5 md:text-base">
-                                                09:00 PM
-                                            </router-link>
-                                        </div>
-                                    </div>
-                                </div>
+                                    </template>
+                                </template>
                             </div>
                         </div>
                     </div>
                     <div v-if="activeTab === 2" class="animate-fade-in px-6 lg:px-0 max-w-6xl mx-auto">
                         <div class="mb-[4.75rem]">
                             <h1 class="text-xl font-bold md:text-4xl text-white">Synopsis</h1>
-                            <p class="mt-6 text-gray-200">A debt-ridden wedding planner inadvertently becomes a successful funeral planner. However, he must convince a traditional Taoist priest of his legitimacy to continue operating in the field.</p>
+                            <p class="mt-6 text-gray-200">{{film.synopsis}}</p>
                         </div>
                     </div>
                 </div>

@@ -63,7 +63,7 @@ export default {
         });
     },
     template: `
-        <main class="mb-8 min-h-screen lg:mb-20 md:px-6">
+        <main class="mb-8 min-h-screen lg:mb-20 md:px-6 overflow-x-hidden">
             <div class="container max-w-6xl mx-auto">
                 <div class="absolute left-0 top-0 w-full overflow-hidden blur-lg max-lg:aspect-video max-lg:max-h-[600px] lg:h-[670px] xl:h-[760px]">
                     <img 
