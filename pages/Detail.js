@@ -1,9 +1,6 @@
-import CensorModal from "../components/censor-modal.js";
+
 export default {
     name: "Detail",
-    components: {
-        CensorModal
-    },
     data() {
         return {
             movieId: this.$route.params.id,
@@ -30,8 +27,6 @@ export default {
             activeCinemaId: null,
             isLoading: false,
             isCollapsed: {},
-            showCensorModal: false,
-            selectedSession: null,
         }
     },
     methods: {
@@ -127,7 +122,7 @@ export default {
             this.showLocationList = !this.showLocationList;
         },
         handleCollapse(index) {
-            this.$set(this.isCollapsed, index, !this.isCollapsed[index]);
+            this.isCollapsed[index] = !this.isCollapsed[index];
         },
         handleClickOutside(event) {
             const dropdown = this.$refs.legendLocationList;
@@ -143,14 +138,6 @@ export default {
             await this.getGroupCinemas(this.activeDay);
 
             this.showLocationList = false;
-        },
-        handleSessionClick(session) {
-            this.selectedSession = session;
-            this.showCensorModal = true;
-        },
-        handleCloseModal() {
-            this.showCensorModal = false;
-            this.selectedSession = null;
         }
     },
     async mounted() {
@@ -321,10 +308,10 @@ export default {
                             <div class="mb-[1.75rem] mt-6 md:[&:not(:last-child)]:mt-[3.75rem]">
                                 <template v-for="(group, index) in groupCinemas" :key="index">
                                     <template v-if="group.formats.length > 0">
-                                        <button class="w-full bg-gradient-to-r from-gray-700/10 via-gray-700/30 to-gray-700/10 first:mt-0 cursor-pointer" @click="handleCollapse(index)">
+                                        <button class="w-full bg-gradient-to-r from-gray-700/10 via-gray-700/30 to-gray-700/10 first:mt-0 cursor-pointer" @click="handleCollapse(group.name)">
                                             <div class="max-w-6xl mx-auto flex items-center justify-between gap-4 py-[1.125rem] border-bottom-linea-divider">
                                                 <h3 class="font-bold md:text-md text-white">{{ group.name }}</h3>
-                                                <svg width="12" height="7" viewBox="0 0 12 7" fill="none" xmlns="http://www.w3.org/2000/svg" :class="[isCollapsed[index] ? 'transition' : 'transition rotate-180']">
+                                                <svg width="12" height="7" viewBox="0 0 12 7" fill="none" xmlns="http://www.w3.org/2000/svg" :class="[isCollapsed[group.name] ? 'transition' : 'transition rotate-180']">
                                                     <path
                                                         d="M0.594154 0.592566L0.594622 0.592089C0.66344 0.521721 0.72368 0.5 0.798736 0.5C0.873738 0.5 0.933524 0.521663 1.00175 0.591612L1.00222 0.592089L5.63463 5.3288L5.99209 5.69432L6.34956 5.3288L10.9978 0.575923C11.0463 0.526343 11.0995 0.5 11.1937 0.5C11.2772 0.5 11.3391 0.524277 11.4054 0.59209C11.4744 0.662668 11.5 0.729488 11.5 0.816719C11.5 0.903889 11.4745 0.97023 11.4059 1.04017C11.4059 1.04019 11.4059 1.04021 11.4058 1.04023L6.07783 6.47204L6.07732 6.47257C6.06745 6.48265 6.06072 6.48766 6.05762 6.48974C6.0547 6.49169 6.05442 6.49145 6.05653 6.49068C6.04281 6.49573 6.02354 6.50014 5.99465 6.5L5.99465 6.49999L5.99209 6.49999C5.96242 6.49999 5.94224 6.4954 5.92766 6.49003C5.92936 6.49066 5.92878 6.49072 5.92567 6.48865C5.92243 6.48649 5.91576 6.48154 5.90612 6.4718C5.90598 6.47166 5.90584 6.47151 5.9057 6.47137L0.578812 1.02454C0.527362 0.971928 0.5 0.913489 0.5 0.816072C0.5 0.72888 0.52555 0.662528 0.594154 0.592566Z"
                                                         fill="white" stroke="white">
@@ -332,7 +319,7 @@ export default {
                                                 </svg>
                                             </div>
                                         </button>
-                                        <div class="container max-w-6xl mx-auto mb-[1.75rem]" v-for="(format, index) in group.formats" :key="index" :class="[isCollapsed[index] ? 'transition hidden' : 'transition block']">
+                                        <div :class="[isCollapsed[group.name] ? 'transition hidden' : 'transition block']" class="container max-w-6xl mx-auto mb-[1.75rem]" v-for="(format, index) in group.formats" :key="index">
                                             <div class="my-10 [&:not(:last-child)]:mb-6 flex flex-wrap items-center gap-4">
                                                 <div class="mb-6">
                                                     <img
@@ -355,14 +342,6 @@ export default {
                                                     >
                                                         {{ formatDateTime(sess.startTime) }}
                                                     </button>
-
-                                                    <censor-modal
-                                                        :show="showCensorModal"
-                                                        :title="'Age Restriction'"
-                                                        :description="'This movie is rated ' + film.rating + '. Are you 18 or older?'"
-                                                        :redirect-path="'/booking/' + (selectedSession ? selectedSession.id : '')"
-                                                        @close="handleCloseModal"
-                                                    />
                                                 </div>
                                             </div>
                                         </div>
